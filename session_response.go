@@ -9,7 +9,7 @@ type sessionResponse struct {
 }
 
 func (r sessionResponse) session(expectedID string) (*Session, error) {
-	if r.ID != expectedID || strings.TrimSpace(r.Name) == "" || strings.TrimSpace(string(r.Status)) == "" ||
+	if !validSegment(r.ID) || expectedID != "" && r.ID != expectedID || strings.TrimSpace(r.Name) == "" || strings.TrimSpace(string(r.Status)) == "" ||
 		r.CreatedAt.IsZero() || r.UpdatedAt.IsZero() || r.EngineLoaded == nil {
 		return nil, ErrInvalidResponse
 	}

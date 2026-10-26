@@ -12,6 +12,10 @@ import (
 )
 
 func (c *Client) doJSON(ctx context.Context, method string, segments []string, input any, expected int, output any) (bool, error) {
+	return c.doJSONQuery(ctx, method, segments, nil, input, expected, output)
+}
+
+func (c *Client) doJSONQuery(ctx context.Context, method string, segments []string, query url.Values, input any, expected int, output any) (bool, error) {
 	if ctx == nil {
 		return false, ErrInvalidInput
 	}
@@ -31,6 +35,7 @@ func (c *Client) doJSON(ctx context.Context, method string, segments []string, i
 	u := c.baseURL
 	u.Path = strings.TrimRight(u.Path, "/") + "/" + strings.Join(segments, "/")
 	u.RawPath = ""
+	u.RawQuery = query.Encode()
 	var payload []byte
 	if input != nil {
 		var err error
@@ -90,7 +95,8 @@ func (c *Client) doJSON(ctx context.Context, method string, segments []string, i
 	if int64(len(body)) > c.maxResponseBytes {
 		return true, ErrResponseTooLarge
 	}
-	if len(bytes.TrimSpace(body)) == 0 || bytes.TrimSpace(body)[0] != '{' {
+	trimmed := bytes.TrimSpace(body)
+	if len(trimmed) == 0 || trimmed[0] != '{' && trimmed[0] != '[' {
 		return true, ErrInvalidResponse
 	}
 	if json.Unmarshal(body, output) != nil {

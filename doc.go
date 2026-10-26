@@ -4,6 +4,7 @@
 // The client never automatically retries requests. Callers must reconcile a send
 // returning ErrOutcomeUnknown before deciding whether to repeat it.
 //
-// The package does not create sessions, manage credentials, normalize regional
-// phone numbers, or persist application notification state.
+// Session creation and listing are explicit operations; the client never
+// provisions automatically. It does not manage credentials, normalize regional
+// phone numbers, or persist application state.
 package openwa

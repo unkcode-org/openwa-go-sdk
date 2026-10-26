@@ -38,6 +38,8 @@ func TestPinnedContractAndSupportedWireTypes(t *testing.T) {
 		t.Fatal("wrong contract version")
 	}
 	for _, op := range []struct{ path, method string }{
+		{"/api/sessions", "post"},
+		{"/api/sessions", "get"},
 		{"/api/sessions/{sessionId}", "get"},
 		{"/api/sessions/{sessionId}/start", "post"},
 		{"/api/sessions/{sessionId}/qr", "get"},
@@ -54,6 +56,7 @@ func TestPinnedContractAndSupportedWireTypes(t *testing.T) {
 		value  any
 	}{
 		{"SessionResponseDto", Session{}},
+		{"CreateSessionDto", CreateSessionInput{}},
 		{"AccountRestrictionDto", AccountRestriction{}},
 		{"QRCodeResponseDto", QRCode{}},
 		{"NumberCheckResponseDto", NumberCheckResult{}},

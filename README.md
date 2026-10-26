@@ -3,7 +3,7 @@
 Cliente HTTP Go para el contrato OpenWA `0.23.4`. Reutilizable entre proyectos, sin dependencias externas y compatible con Go 1.22 o posterior.
 
 ```sh
-go get github.com/unkcode-org/openwa-go-sdk@v0.1.0
+go get github.com/unkcode-org/openwa-go-sdk@v0.2.0
 ```
 
 Si el repositorio es privado, el consumidor necesita acceso Git y una configuración
@@ -49,6 +49,8 @@ El cliente es seguro para uso concurrente con un transporte que también lo sea.
 
 | Método | Endpoint | Comportamiento |
 | --- | --- | --- |
+| `CreateSession` | `POST /api/sessions` | Crea una sesión con nombre único; el ID lo devuelve el gateway. |
+| `ListSessions` | `GET /api/sessions` | Lee una página para recuperar por nombre una creación previa. |
 | `GetSession` | `GET /api/sessions/{id}` | Lee estado, identidad y `engineLoaded`, sin iniciar la sesión. |
 | `StartSession` | `POST /api/sessions/{id}/start` | Inicia una sesión existente; conserva los errores de conflicto del gateway. |
 | `GetQRCode` | `GET /api/sessions/{id}/qr` | Obtiene el QR disponible; no espera un escaneo ni inicia sesiones. |
@@ -56,7 +58,7 @@ El cliente es seguro para uso concurrente con un transporte que también lo sea.
 | `SendText` | `POST /api/sessions/{id}/messages/send-text` | Espera aceptación; soporta menciones, respuesta citada y opciones de preview. |
 | `SendDocument` | `POST /api/sessions/{id}/messages/send-document` | Envía bytes base64 o una URL de documento, con nombre, MIME y caption. |
 
-La administración de claves, creación/borrado de sesiones, webhooks, grupos y otras operaciones de OpenWA quedan fuera de esta primera versión. El SDK no ejecuta reconexión, logout, stop ni fallback automáticamente. Los estados nuevos no vacíos se conservan para compatibilidad futura. La aplicación decide cuándo iniciar una sesión según `EngineLoaded`; `disconnected` también puede significar que un motor está reconectando.
+La administración de claves, borrado de sesiones, webhooks, grupos y otras operaciones de OpenWA quedan fuera de esta versión. El SDK no ejecuta reconexión, logout, stop ni fallback automáticamente. Los estados nuevos no vacíos se conservan para compatibilidad futura. La aplicación decide cuándo iniciar una sesión según `EngineLoaded`; `disconnected` también puede significar que un motor está reconectando.
 
 Para enviar un PDF privado:
 
@@ -116,7 +118,7 @@ Los errores imprimibles omiten cuerpos remotos, claves, URLs y mensajes del prov
 
 Cero selecciona el default; valores negativos son inválidos. Configurar límites acordes al proxy/gateway, considerando la expansión base64. Texto: hasta 4096 caracteres; caption: hasta 1024. `HTTPClient` se copia sin mutar la instancia inyectada. Todas las redirecciones se rechazan, incluso hacia el mismo host. Los transportes personalizados deben respetar contextos y no agregar reintentos de envíos ni logs de credenciales.
 
-Para cada cliente/ambiente, configurar el ID real de su sesión y una clave restringida mediante `allowedSessions`. El SDK no impone pertenencia entre tenants: corresponde al consumidor y al gateway. Mantener credenciales administrativas fuera de las aplicaciones y proteger el QR como material de autenticación.
+Para cada cliente/ambiente, persistir la identidad de su sesión. Las claves restringidas mediante `allowedSessions` sirven para operar sesiones ya asignadas. Crear y recuperar sesiones requiere una credencial con permisos de creación/listado; el SDK no amplía permisos ni modifica claves automáticamente. El SDK no impone pertenencia entre tenants: corresponde al consumidor y al gateway. Mantener credenciales administrativas fuera de las aplicaciones y proteger el QR como material de autenticación.
 
 ## Contrato fijado
 
@@ -137,3 +139,17 @@ go build ./...
 ```
 
 El CI ejecuta los checks en Go 1.22 y 1.26. Las pruebas usan `httptest` o transportes locales; no requieren secretos ni envían mensajes reales.
+
+## Creación recuperable de sesiones
+
+```go
+created, err := client.CreateSession(ctx, openwa.CreateSessionInput{Name: persistedUniqueName})
+page, err := client.ListSessions(ctx, &openwa.ListSessionsOptions{Limit: 100, Offset: 0})
+```
+
+Persistir un nombre único por instalación antes del POST. Si se pierde la respuesta,
+recuperar mediante listado paginado y coincidencia exacta del nombre; no elegir la
+primera sesión ni generar otro nombre al reintentar. Un 409 indica que el nombre
+ya existe. La creación no vincula automáticamente la cuenta: iniciar la sesión
+y presentar su QR sigue siendo un paso independiente. El SDK no persiste estado
+ni reintenta automáticamente la creación.
