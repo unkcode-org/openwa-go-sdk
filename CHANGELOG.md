@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.3.0 — 2026-11-06
+
+- Explicit stop, logout, delete and pairing code operations; creation proxy fields.
+- Read/patch session configuration with distinct omitted/null/zero semantics.
+- Optional cancelable session supervisor and one-shot reconciliation, bounded concurrency, per-session serialization and capped recovery backoff with jitter.
+- Loaded engines are left to native reconnection; missing sessions are never recreated and human linking is surfaced. No automatic sends or destructive recovery.
+- Additional pinned-contract, lifecycle, concurrency and recovery tests.
+
+
 ## v0.2.0 — 2026-10-26
 
 - Explicit session creation with unique-name validation and typed configuration.

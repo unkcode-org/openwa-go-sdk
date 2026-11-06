@@ -42,6 +42,12 @@ func TestPinnedContractAndSupportedWireTypes(t *testing.T) {
 		{"/api/sessions", "get"},
 		{"/api/sessions/{sessionId}", "get"},
 		{"/api/sessions/{sessionId}/start", "post"},
+		{"/api/sessions/{sessionId}", "delete"},
+		{"/api/sessions/{sessionId}/stop", "post"},
+		{"/api/sessions/{sessionId}/logout", "post"},
+		{"/api/sessions/{sessionId}/pairing-code", "post"},
+		{"/api/sessions/{sessionId}/config", "get"},
+		{"/api/sessions/{sessionId}/config", "patch"},
 		{"/api/sessions/{sessionId}/qr", "get"},
 		{"/api/sessions/{sessionId}/contacts/check/{number}", "get"},
 		{"/api/sessions/{sessionId}/messages/send-text", "post"},
@@ -64,6 +70,10 @@ func TestPinnedContractAndSupportedWireTypes(t *testing.T) {
 		{"SendMediaMessageDto", DocumentMessage{}},
 		{"CustomLinkPreviewDto", CustomLinkPreview{}},
 		{"MessageResponseDto", MessageResult{}},
+		{"RequestPairingCodeDto", PairingCodeInput{}},
+		{"PairingCodeResponseDto", PairingCode{}},
+		{"SessionConfigResponseDto", EffectiveSessionConfig{}},
+		{"UpdateSessionConfigDto", SessionConfigPatch{}},
 	} {
 		typ := reflect.TypeOf(tc.value)
 		for i := 0; i < typ.NumField(); i++ {

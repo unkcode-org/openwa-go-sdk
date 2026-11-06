@@ -3,7 +3,7 @@
 Cliente HTTP Go para el contrato OpenWA `0.23.4`. Reutilizable entre proyectos, sin dependencias externas y compatible con Go 1.22 o posterior.
 
 ```sh
-go get github.com/unkcode-org/openwa-go-sdk@v0.2.0
+go get github.com/unkcode-org/openwa-go-sdk@v0.3.0
 ```
 
 Si el repositorio es privado, el consumidor necesita acceso Git y una configuración
@@ -58,7 +58,7 @@ El cliente es seguro para uso concurrente con un transporte que también lo sea.
 | `SendText` | `POST /api/sessions/{id}/messages/send-text` | Espera aceptación; soporta menciones, respuesta citada y opciones de preview. |
 | `SendDocument` | `POST /api/sessions/{id}/messages/send-document` | Envía bytes base64 o una URL de documento, con nombre, MIME y caption. |
 
-La administración de claves, borrado de sesiones, webhooks, grupos y otras operaciones de OpenWA quedan fuera de esta versión. El SDK no ejecuta reconexión, logout, stop ni fallback automáticamente. Los estados nuevos no vacíos se conservan para compatibilidad futura. La aplicación decide cuándo iniciar una sesión según `EngineLoaded`; `disconnected` también puede significar que un motor está reconectando.
+La administración de claves, webhooks, grupos y otras operaciones de OpenWA quedan fuera de esta versión. Stop, logout y delete son operaciones explícitas y nunca se ejecutan como fallback. El cliente HTTP no reconecta automáticamente; el supervisor opcional descrito abajo sí puede recuperar motores descargados cuando la aplicación lo habilita. Los estados nuevos no vacíos se conservan para compatibilidad futura. La aplicación decide cuándo iniciar una sesión según `EngineLoaded`; `disconnected` también puede significar que un motor está reconectando.
 
 Para enviar un PDF privado:
 
@@ -153,3 +153,76 @@ primera sesión ni generar otro nombre al reintentar. Un 409 indica que el nombr
 ya existe. La creación no vincula automáticamente la cuenta: iniciar la sesión
 y presentar su QR sigue siendo un paso independiente. El SDK no persiste estado
 ni reintenta automáticamente la creación.
+
+## Ciclo de vida explícito (v0.3.0)
+
+`StopSession`, `LogoutSession`, `DeleteSession` y `RequestPairingCode` completan
+las operaciones de administración usadas por Gofip. Son llamadas únicas: no
+reintentan ni convierten un fallo de teardown en éxito. Logout elimina credenciales
+y exige volver a vincular. El código de vinculación es material de autenticación.
+`CreateSessionInput` admite `ProxyURL` y `ProxyType` (http/https/socks4/socks5).
+
+`GetSessionConfig` y `UpdateSessionConfig` consultan y modifican configuración
+sin reiniciar. En `SessionConfigPatch`, un campo nil se omite; un
+`&openwa.ConfigValue[int]{}` envía null y restaura el default del gateway:
+
+```go
+_, err = client.UpdateSessionConfig(ctx, sessionID, openwa.SessionConfigPatch{
+    MaxReconnectAttempts: &openwa.ConfigValue[int]{}, // ilimitado
+})
+```
+
+Para enviar cero/false explícitamente, usar `Value: &value` dentro de ConfigValue.
+**Cero deshabilita la reconexión**; nil/null significa ilimitado. Los cambios de
+reconexión se aplican en el próximo start. No cambian un backoff ya en curso.
+
+## Supervisión opcional de sesiones (v0.3.0)
+
+```go
+supervisor, err := openwa.NewSupervisor(client, openwa.SupervisorConfig{
+    PollInterval: 30 * time.Second,
+    OnChange: func(result openwa.SupervisionResult) {
+        // Persistir/publicar estado mediante la aplicación. No incluye QR ni teléfono.
+    },
+})
+if err != nil { return err }
+// Esta sesión ya fue validada como propia y deseada activa por la aplicación.
+// Run bloquea; el caller puede ejecutarlo en su worker y debe esperar su retorno.
+err = supervisor.Run(ctx, sessionID)
+```
+
+No se inicia ninguna goroutine al construir el cliente o el supervisor. `Run`
+consulta inmediatamente y periódicamente, usa espera creciente con jitter ante
+recuperación/fallos y devuelve `ctx.Err()` cuando termina. Defaults: polling 30 s,
+timeout por reconciliación 15 s, backoff máximo 5 min y concurrencia máxima 4.
+`OnChange` recibe transiciones y debe retornar rápidamente; corre sin locks de
+ciclo de vida. Un segundo Run para la misma sesión en el mismo supervisor devuelve
+`ErrAlreadySupervised`.
+
+`Reconcile(ctx, sessionID)` realiza una sola observación/recuperación, útil para
+workers con scheduling durable propio. Serializa llamadas por sesión dentro de
+esa instancia; la aplicación conserva backoff, locks distribuidos y scope.
+
+El supervisor sólo llama GET y, si corresponde, START. No interrumpe un motor
+cargado aunque el estado sea disconnected. Espera durante autenticación y ante
+QR, restricciones, acción humana o estados desconocidos; una sesión 404 se informa
+como missing y nunca se recrea. Tras 400/409 de start vuelve a consultar una vez.
+Los motores descargados en estados conocidos recuperables pueden iniciarse.
+Un motor estancado pero aún cargado se informa como recovering: no se fuerza un
+stop, logout, delete ni force-kill.
+
+La conexión WebSocket y sus heartbeats pertenecen al motor del gateway. Leer
+estado no es un ping extremo a extremo ni garantiza la recepción de un mensaje.
+
+La aplicación debe:
+
+- Registrar sólo sesiones propias y deseadas activas; persistir esa intención y
+  reconstruir los workers tras reinicios.
+- Cancelar Run y esperar su retorno antes de detener, desvincular o eliminar una
+  sesión manualmente. Reconcile debe coordinarse con esas operaciones del mismo modo.
+- Coordinar exclusión entre procesos/réplicas; los locks del SDK sólo son locales.
+- Mantener la cola de mensajes y reactivarla al recuperar disponibilidad. Nunca
+  consumir todos los intentos por una caída ni repetir `ErrOutcomeUnknown` a ciegas.
+
+Ni Run ni Reconcile llaman a métodos de envío. El cambio no altera la política
+sin reintentos automáticos de mensajes.

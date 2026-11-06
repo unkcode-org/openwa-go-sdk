@@ -95,6 +95,9 @@ func (c *Client) doJSONQuery(ctx context.Context, method string, segments []stri
 	if int64(len(body)) > c.maxResponseBytes {
 		return true, ErrResponseTooLarge
 	}
+	if output == nil {
+		return true, nil
+	}
 	trimmed := bytes.TrimSpace(body)
 	if len(trimmed) == 0 || trimmed[0] != '{' && trimmed[0] != '[' {
 		return true, ErrInvalidResponse

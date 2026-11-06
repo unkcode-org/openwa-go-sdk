@@ -25,6 +25,9 @@ func (c *Client) CreateSession(ctx context.Context, input CreateSessionInput) (*
 			return nil, ErrInvalidInput
 		}
 	}
+	if !validProxy(input.ProxyURL, input.ProxyType) {
+		return nil, ErrInvalidInput
+	}
 	var response sessionResponse
 	_, err := c.doJSON(ctx, http.MethodPost, []string{"api", "sessions"}, input, http.StatusCreated, &response)
 	if err != nil {
