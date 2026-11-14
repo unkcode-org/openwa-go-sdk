@@ -3,7 +3,7 @@
 Cliente HTTP Go para el contrato OpenWA `0.30.1`. Reutilizable entre proyectos, sin dependencias externas y compatible con Go 1.22 o posterior.
 
 ```sh
-go get github.com/unkcode-org/openwa-go-sdk@v0.5.0
+go get github.com/unkcode-org/openwa-go-sdk@v0.5.1
 ```
 
 Si el repositorio es privado, el consumidor necesita acceso Git y una configuración
@@ -254,7 +254,9 @@ La aplicación debe:
 Ni Run ni Reconcile llaman a métodos de envío. El cambio no altera la política
 sin reintentos automáticos de mensajes.
 
-## Compatibilidad con OpenWA 0.30.1 (v0.4.0)
+## Compatibilidad con OpenWA 0.30.1
+
+El SDK v0.5.1 fija el contrato de OpenWA 0.30.1. Frente a OpenWA 0.30.0, el único cambio en el OpenAPI es `info.version`.
 
 El SDK cubre únicamente las operaciones listadas arriba y las de ciclo de vida y configuración; no implementa toda la API. `CustomLinkPreview` admite `ThumbnailURL` y `ThumbnailBase64` (si se envían ambos, el gateway prioriza base64). La URL de imagen la descarga el gateway y debe tratarse como dato no confiable. `RestrictionPasskeyRequired` identifica una solicitud de passkey; se conservan valores desconocidos. Los códigos de vinculación requieren entre 6 y 15 dígitos.
 

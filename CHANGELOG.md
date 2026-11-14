@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.5.1 — 2026-11-14
 
 - Update the pinned OpenAPI snapshot to OpenWA 0.30.1; the contract changes only its version.
 
