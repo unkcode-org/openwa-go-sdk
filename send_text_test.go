@@ -32,6 +32,29 @@ func TestSendTextPayloadAndResult(t *testing.T) {
 	}
 }
 
+func TestSendTextCustomPreviewThumbnails(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Preview CustomLinkPreview `json:"customLinkPreview"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatal(err)
+		}
+		if body.Preview.ThumbnailURL != "https://example.com/image.jpg" || body.Preview.ThumbnailBase64 != "aW1hZ2U=" {
+			t.Errorf("unexpected preview: %+v", body.Preview)
+		}
+		w.WriteHeader(http.StatusCreated)
+		fmt.Fprint(w, messageJSON)
+	})
+	_, err := c.SendText(context.Background(), "session-1", TextMessage{
+		ChatID: "123456@c.us", Text: "https://example.com",
+		CustomLinkPreview: &CustomLinkPreview{URL: "https://example.com", Title: "Example", ThumbnailURL: "https://example.com/image.jpg", ThumbnailBase64: "aW1hZ2U="},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestTextValidationBeforeNetwork(t *testing.T) {
 	c := testClient(t, func(w http.ResponseWriter, r *http.Request) { t.Error("invalid input dispatched") })
 	for _, input := range []TextMessage{{ChatID: "", Text: "hello"}, {ChatID: "x@c.us", Text: " "}, {ChatID: "x@c.us", Text: strings.Repeat("x", 4097)}, {ChatID: "x@c.us", Text: string([]byte{0xff})}, {ChatID: "x@c.us", Text: "hello", CustomLinkPreview: &CustomLinkPreview{URL: "file:///tmp/x", Title: "x"}}} {

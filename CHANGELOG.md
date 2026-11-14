@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.4.0 — 2026-11-14
+
+- Update the pinned OpenAPI snapshot to OpenWA 0.30.0.
+- Support custom link preview thumbnails and the passkey restriction kind.
+- Validate pairing phone length and document gateway compatibility changes.
+
 ## v0.3.0 — 2026-11-06
 
 - Explicit stop, logout, delete and pairing code operations; creation proxy fields.

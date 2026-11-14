@@ -33,6 +33,10 @@ type Session struct {
 	EngineLoaded bool                `json:"engineLoaded"`
 }
 
+// RestrictionPasskeyRequired signals that WhatsApp requires a passkey to finish linking.
+// Unknown restriction kinds are retained as strings for forward compatibility.
+const RestrictionPasskeyRequired = "passkey_required"
+
 type AccountRestriction struct {
 	Kind      string     `json:"kind"`
 	Code      string     `json:"code"`

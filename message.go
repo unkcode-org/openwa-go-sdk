@@ -1,9 +1,11 @@
 package openwa
 
 type CustomLinkPreview struct {
-	URL         string `json:"url"`
-	Title       string `json:"title"`
-	Description string `json:"description,omitempty"`
+	URL             string `json:"url"`
+	Title           string `json:"title"`
+	Description     string `json:"description,omitempty"`
+	ThumbnailURL    string `json:"thumbnailUrl,omitempty"`
+	ThumbnailBase64 string `json:"thumbnailBase64,omitempty"`
 }
 
 // TextMessage uses the provider's canonical chat ID, not a regional phone number.

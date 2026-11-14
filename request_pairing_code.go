@@ -8,7 +8,7 @@ import (
 
 // RequestPairingCode requests a code for an already started, unlinked session.
 func (c *Client) RequestPairingCode(ctx context.Context, sessionID string, input PairingCodeInput) (*PairingCode, error) {
-	if input.PhoneNumber == "" {
+	if len(input.PhoneNumber) < 6 || len(input.PhoneNumber) > 15 {
 		return nil, ErrInvalidInput
 	}
 	for _, ch := range input.PhoneNumber {

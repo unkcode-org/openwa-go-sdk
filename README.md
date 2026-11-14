@@ -1,9 +1,9 @@
 # OpenWA Go SDK
 
-Cliente HTTP Go para el contrato OpenWA `0.23.4`. Reutilizable entre proyectos, sin dependencias externas y compatible con Go 1.22 o posterior.
+Cliente HTTP Go para el contrato OpenWA `0.30.0`. Reutilizable entre proyectos, sin dependencias externas y compatible con Go 1.22 o posterior.
 
 ```sh
-go get github.com/unkcode-org/openwa-go-sdk@v0.3.0
+go get github.com/unkcode-org/openwa-go-sdk@v0.4.0
 ```
 
 Si el repositorio es privado, el consumidor necesita acceso Git y una configuración
@@ -72,11 +72,11 @@ result, err := client.SendDocument(ctx, sessionID, openwa.DocumentMessage{
 })
 ```
 
-`Base64` contiene base64 estándar, sin prefijo data URL ni saltos de línea. Se requiere exactamente una fuente: `Base64` o `URL`. Las URLs las descarga el gateway, por lo que el límite local de bytes de documento solo aplica a base64. Restringir URLs admitidas por la aplicación para evitar SSRF en el gateway; preferir base64 para archivos privados. El SDK no normaliza teléfonos por país ni convierte IDs de WhatsMeow: usar el formato del proveedor o el ID de `CheckNumber`.
+`Base64` contiene base64 estándar, sin prefijo data URL ni saltos de línea. Se requiere exactamente una fuente: `Base64` o `URL`. Las URLs las descarga el gateway, por lo que el límite local de bytes de documento solo aplica a base64. Restringir URLs admitidas por la aplicación para evitar SSRF en el gateway; preferir base64 para archivos privados. El SDK no normaliza teléfonos por país: usar el ID de `CheckNumber`. OpenWA 0.30.0 devuelve ese ID en formato `<phone>@c.us` en ambos motores.
 
 ## Errores y reintentos
 
-El contrato confirmado no documenta idempotencia en `send-text` ni `send-document`. El cliente no realiza reintentos automáticos de ninguna operación ni agrega encabezados de idempotencia.
+OpenWA admite idempotencia en rutas de envío; este SDK todavía no expone esa opción. El cliente no realiza reintentos automáticos de ninguna operación ni agrega encabezados de idempotencia.
 
 ```go
 if errors.Is(err, openwa.ErrOutcomeUnknown) {
@@ -122,10 +122,10 @@ Para cada cliente/ambiente, persistir la identidad de su sesión. Las claves res
 
 ## Contrato fijado
 
-- Fuente indicada por el usuario: [GoFip Backend OpenAPI](https://github.com/unkcode-org/gofip-backend/blob/67b3ead89c23307fa58a26c885329a7c662874e4/backend/docs/openwa-openapi.json).
-- Versión declarada: `0.23.4`.
+- Fuente: [OpenWA v0.30.0 OpenAPI](https://github.com/rmyndharis/OpenWA/blob/v0.30.0/openapi.json).
+- Versión declarada: `0.30.0`.
 - Copia exacta: `testdata/openapi.json`.
-- SHA-256: `2497289cbaf479776511df91bf8278e8298d30f49a43aee4633be84e559c11d2`.
+- SHA-256: `6be7bd3a0e1f52d89c779313dce2c7a597462c7cfc01d3745e9185b9aa34a0c9`.
 
 Los tests verifican el hash y los nombres de campos/operaciones soportados. No representan una prueba contra una instancia real ni garantizan compatibilidad con otras versiones.
 
@@ -226,3 +226,9 @@ La aplicación debe:
 
 Ni Run ni Reconcile llaman a métodos de envío. El cambio no altera la política
 sin reintentos automáticos de mensajes.
+
+## Compatibilidad con OpenWA 0.30.0 (v0.4.0)
+
+El SDK cubre únicamente las operaciones listadas arriba y las de ciclo de vida y configuración; no implementa toda la API. `CustomLinkPreview` admite `ThumbnailURL` y `ThumbnailBase64` (si se envían ambos, el gateway prioriza base64). La URL de imagen la descarga el gateway y debe tratarse como dato no confiable. `RestrictionPasskeyRequired` identifica una solicitud de passkey; se conservan valores desconocidos. Los códigos de vinculación requieren entre 6 y 15 dígitos.
+
+Revisar antes de actualizar el servidor desde 0.23.4: crear sesiones con proxy requiere clave ADMIN, comprobar números requiere al menos OPERATOR y el rechazo por alcance responde 403 en vez de 401. `ProxyType` está obsoleto y lo determina el esquema de `ProxyURL`. Hay validaciones más estrictas, migraciones y condiciones de rollback entre versiones; consultar las [notas de actualización](https://github.com/rmyndharis/OpenWA/blob/v0.30.0/docs/14-migration-guide.md) y probar en staging con copias de seguridad. Este SDK no garantiza compatibilidad automática de todas las integraciones ni realiza el despliegue.

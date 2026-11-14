@@ -112,7 +112,7 @@ func TestProxyAndConfigPatch(t *testing.T) {
 }
 func TestLifecycleInputAndResponseValidation(t *testing.T) {
 	c := testClient(t, func(w http.ResponseWriter, r *http.Request) { t.Error("invalid request dispatched") })
-	for _, phone := range []string{"", "+549351", "12a"} {
+	for _, phone := range []string{"", "+549351", "12a", "12345", "1234567890123456"} {
 		if _, e := c.RequestPairingCode(context.Background(), "session-1", PairingCodeInput{PhoneNumber: phone}); !errors.Is(e, ErrInvalidInput) {
 			t.Fatal(e)
 		}

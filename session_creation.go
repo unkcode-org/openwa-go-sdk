@@ -1,10 +1,11 @@
 package openwa
 
 type CreateSessionInput struct {
-	Name      string         `json:"name"`
-	Config    *SessionConfig `json:"config,omitempty"`
-	ProxyURL  string         `json:"proxyUrl,omitempty"`
-	ProxyType ProxyType      `json:"proxyType,omitempty"`
+	Name     string         `json:"name"`
+	Config   *SessionConfig `json:"config,omitempty"`
+	ProxyURL string         `json:"proxyUrl,omitempty"`
+	// ProxyType is deprecated by OpenWA and ignored; ProxyURL selects the protocol.
+	ProxyType ProxyType `json:"proxyType,omitempty"`
 }
 
 type SessionConfig struct {
