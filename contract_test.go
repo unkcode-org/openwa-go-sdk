@@ -52,6 +52,10 @@ func TestPinnedContractAndSupportedWireTypes(t *testing.T) {
 		{"/api/sessions/{sessionId}/contacts/check/{number}", "get"},
 		{"/api/sessions/{sessionId}/messages/send-text", "post"},
 		{"/api/sessions/{sessionId}/messages/send-document", "post"},
+		{"/api/sessions/{sessionId}/messages/send-image", "post"},
+		{"/api/sessions/{sessionId}/webhooks", "get"},
+		{"/api/sessions/{sessionId}/webhooks", "post"},
+		{"/api/sessions/{sessionId}/webhooks/{id}", "put"},
 	} {
 		if spec.Paths[op.path][op.method] == nil {
 			t.Errorf("operation absent from contract: %s %s", op.method, op.path)
@@ -68,6 +72,12 @@ func TestPinnedContractAndSupportedWireTypes(t *testing.T) {
 		{"NumberCheckResponseDto", NumberCheckResult{}},
 		{"SendTextMessageDto", TextMessage{}},
 		{"SendMediaMessageDto", DocumentMessage{}},
+		{"SendMediaMessageDto", ImageMessage{}},
+		{"CreateWebhookDto", CreateWebhookInput{}},
+		{"UpdateWebhookDto", UpdateWebhookInput{}},
+		{"WebhookResponseDto", Webhook{}},
+		{"WebhookFiltersDto", WebhookFilters{}},
+		{"WebhookFilterConditionDto", WebhookFilterCondition{}},
 		{"CustomLinkPreviewDto", CustomLinkPreview{}},
 		{"MessageResponseDto", MessageResult{}},
 		{"RequestPairingCodeDto", PairingCodeInput{}},

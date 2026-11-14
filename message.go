@@ -34,6 +34,19 @@ type DocumentMessage struct {
 	QuotedMessageID string   `json:"quotedMessageId,omitempty"`
 }
 
+// ImageMessage requires exactly one of Base64 (standard encoded bytes) or URL.
+// MIMEType is required for Base64. The gateway fetches URLs, so applications
+// should restrict URLs they accept from users.
+type ImageMessage struct {
+	ChatID          string   `json:"chatId"`
+	URL             string   `json:"url,omitempty"`
+	Base64          string   `json:"base64,omitempty"`
+	MIMEType        string   `json:"mimetype,omitempty"`
+	Caption         string   `json:"caption,omitempty"`
+	Mentions        []string `json:"mentions,omitempty"`
+	QuotedMessageID string   `json:"quotedMessageId,omitempty"`
+}
+
 // MessageResult confirms gateway acceptance only, not delivery or read status.
 type MessageResult struct {
 	MessageID string  `json:"messageId"`

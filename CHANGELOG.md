@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.0 — 2026-11-14
+
+- Add image messages from base64 or a URL with captions and typed send outcomes.
+- Add session-scoped webhook listing, creation and updates with partial configuration.
+- Keep the OpenWA 0.30.0 contract and Go 1.22 support.
+
 ## v0.4.0 — 2026-11-14
 
 - Update the pinned OpenAPI snapshot to OpenWA 0.30.0.

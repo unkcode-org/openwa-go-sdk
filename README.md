@@ -3,7 +3,7 @@
 Cliente HTTP Go para el contrato OpenWA `0.30.0`. Reutilizable entre proyectos, sin dependencias externas y compatible con Go 1.22 o posterior.
 
 ```sh
-go get github.com/unkcode-org/openwa-go-sdk@v0.4.0
+go get github.com/unkcode-org/openwa-go-sdk@v0.5.0
 ```
 
 Si el repositorio es privado, el consumidor necesita acceso Git y una configuración
@@ -57,8 +57,12 @@ El cliente es seguro para uso concurrente con un transporte que también lo sea.
 | `CheckNumber` | `GET /api/sessions/{id}/contacts/check/{number}` | Consulta existencia y devuelve el identificador canónico del proveedor. |
 | `SendText` | `POST /api/sessions/{id}/messages/send-text` | Espera aceptación; soporta menciones, respuesta citada y opciones de preview. |
 | `SendDocument` | `POST /api/sessions/{id}/messages/send-document` | Envía bytes base64 o una URL de documento, con nombre, MIME y caption. |
+| `SendImage` | `POST /api/sessions/{id}/messages/send-image` | Envía una imagen base64 o por URL, con MIME y caption. |
+| `ListWebhooks` | `GET /api/sessions/{id}/webhooks` | Lista las suscripciones de la sesión. |
+| `CreateWebhook` | `POST /api/sessions/{id}/webhooks` | Registra una suscripción con eventos y secreto de firma opcional. |
+| `UpdateWebhook` | `PUT /api/sessions/{id}/webhooks/{webhookId}` | Actualiza los campos suministrados, incluido el estado activo. |
 
-La administración de claves, webhooks, grupos y otras operaciones de OpenWA quedan fuera de esta versión. Stop, logout y delete son operaciones explícitas y nunca se ejecutan como fallback. El cliente HTTP no reconecta automáticamente; el supervisor opcional descrito abajo sí puede recuperar motores descargados cuando la aplicación lo habilita. Los estados nuevos no vacíos se conservan para compatibilidad futura. La aplicación decide cuándo iniciar una sesión según `EngineLoaded`; `disconnected` también puede significar que un motor está reconectando.
+La administración de claves y grupos queda fuera de esta versión. Stop, logout y delete son operaciones explícitas y nunca se ejecutan como fallback. El cliente HTTP no reconecta automáticamente; el supervisor opcional descrito abajo sí puede recuperar motores descargados cuando la aplicación lo habilita. Los estados nuevos no vacíos se conservan para compatibilidad futura. La aplicación decide cuándo iniciar una sesión según `EngineLoaded`; `disconnected` también puede significar que un motor está reconectando.
 
 Para enviar un PDF privado:
 
@@ -73,6 +77,29 @@ result, err := client.SendDocument(ctx, sessionID, openwa.DocumentMessage{
 ```
 
 `Base64` contiene base64 estándar, sin prefijo data URL ni saltos de línea. Se requiere exactamente una fuente: `Base64` o `URL`. Las URLs las descarga el gateway, por lo que el límite local de bytes de documento solo aplica a base64. Restringir URLs admitidas por la aplicación para evitar SSRF en el gateway; preferir base64 para archivos privados. El SDK no normaliza teléfonos por país: usar el ID de `CheckNumber`. OpenWA 0.30.0 devuelve ese ID en formato `<phone>@c.us` en ambos motores.
+
+### Imágenes y webhooks
+
+```go
+result, err := client.SendImage(ctx, sessionID, openwa.ImageMessage{
+    ChatID:   chatID,
+    Base64:   base64.StdEncoding.EncodeToString(imageBytes),
+    MIMEType: "image/png",
+    Caption:  "Tu pedido",
+})
+```
+
+`MaxRequestBytes` limita el JSON de la imagen, incluida la expansión de base64. El gateway aplica sus límites de medios. Las URL son descargadas por el gateway.
+
+```go
+hook, err := client.CreateWebhook(ctx, sessionID, openwa.CreateWebhookInput{
+    URL:    callbackURL,
+    Events: []string{"message.ack"},
+    Secret: signingSecret,
+})
+```
+
+Usá `ListWebhooks` para recuperar la suscripción por URL antes de repetir una creación cuyo resultado quedó incierto. Usá `UpdateWebhook` para actualizar una suscripción existente por ID. El secreto y los encabezados configurados son de escritura. El receptor del webhook verifica la firma y procesa los eventos.
 
 ## Errores y reintentos
 
