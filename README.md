@@ -1,6 +1,6 @@
 # OpenWA Go SDK
 
-Cliente HTTP Go para el contrato OpenWA `0.30.0`. Reutilizable entre proyectos, sin dependencias externas y compatible con Go 1.22 o posterior.
+Cliente HTTP Go para el contrato OpenWA `0.30.1`. Reutilizable entre proyectos, sin dependencias externas y compatible con Go 1.22 o posterior.
 
 ```sh
 go get github.com/unkcode-org/openwa-go-sdk@v0.5.0
@@ -76,7 +76,7 @@ result, err := client.SendDocument(ctx, sessionID, openwa.DocumentMessage{
 })
 ```
 
-`Base64` contiene base64 estándar, sin prefijo data URL ni saltos de línea. Se requiere exactamente una fuente: `Base64` o `URL`. Las URLs las descarga el gateway, por lo que el límite local de bytes de documento solo aplica a base64. Restringir URLs admitidas por la aplicación para evitar SSRF en el gateway; preferir base64 para archivos privados. El SDK no normaliza teléfonos por país: usar el ID de `CheckNumber`. OpenWA 0.30.0 devuelve ese ID en formato `<phone>@c.us` en ambos motores.
+`Base64` contiene base64 estándar, sin prefijo data URL ni saltos de línea. Se requiere exactamente una fuente: `Base64` o `URL`. Las URLs las descarga el gateway, por lo que el límite local de bytes de documento solo aplica a base64. Restringir URLs admitidas por la aplicación para evitar SSRF en el gateway; preferir base64 para archivos privados. El SDK no normaliza teléfonos por país: usar el ID de `CheckNumber`. OpenWA 0.30.1 devuelve ese ID en formato `<phone>@c.us` en ambos motores.
 
 ### Imágenes y webhooks
 
@@ -149,10 +149,10 @@ Para cada cliente/ambiente, persistir la identidad de su sesión. Las claves res
 
 ## Contrato fijado
 
-- Fuente: [OpenWA v0.30.0 OpenAPI](https://github.com/rmyndharis/OpenWA/blob/v0.30.0/openapi.json).
-- Versión declarada: `0.30.0`.
+- Fuente: [OpenWA v0.30.1 OpenAPI](https://github.com/rmyndharis/OpenWA/blob/v0.30.1/openapi.json).
+- Versión declarada: `0.30.1`.
 - Copia exacta: `testdata/openapi.json`.
-- SHA-256: `6be7bd3a0e1f52d89c779313dce2c7a597462c7cfc01d3745e9185b9aa34a0c9`.
+- SHA-256: `1f0c3ba6f7be80a44f2f27ab881531a291563182ea04c240279014adcd015afe`.
 
 Los tests verifican el hash y los nombres de campos/operaciones soportados. No representan una prueba contra una instancia real ni garantizan compatibilidad con otras versiones.
 
@@ -254,8 +254,8 @@ La aplicación debe:
 Ni Run ni Reconcile llaman a métodos de envío. El cambio no altera la política
 sin reintentos automáticos de mensajes.
 
-## Compatibilidad con OpenWA 0.30.0 (v0.4.0)
+## Compatibilidad con OpenWA 0.30.1 (v0.4.0)
 
 El SDK cubre únicamente las operaciones listadas arriba y las de ciclo de vida y configuración; no implementa toda la API. `CustomLinkPreview` admite `ThumbnailURL` y `ThumbnailBase64` (si se envían ambos, el gateway prioriza base64). La URL de imagen la descarga el gateway y debe tratarse como dato no confiable. `RestrictionPasskeyRequired` identifica una solicitud de passkey; se conservan valores desconocidos. Los códigos de vinculación requieren entre 6 y 15 dígitos.
 
-Revisar antes de actualizar el servidor desde 0.23.4: crear sesiones con proxy requiere clave ADMIN, comprobar números requiere al menos OPERATOR y el rechazo por alcance responde 403 en vez de 401. `ProxyType` está obsoleto y lo determina el esquema de `ProxyURL`. Hay validaciones más estrictas, migraciones y condiciones de rollback entre versiones; consultar las [notas de actualización](https://github.com/rmyndharis/OpenWA/blob/v0.30.0/docs/14-migration-guide.md) y probar en staging con copias de seguridad. Este SDK no garantiza compatibilidad automática de todas las integraciones ni realiza el despliegue.
+Revisar antes de actualizar el servidor desde 0.23.4: crear sesiones con proxy requiere clave ADMIN, comprobar números requiere al menos OPERATOR y el rechazo por alcance responde 403 en vez de 401. `ProxyType` está obsoleto y lo determina el esquema de `ProxyURL`. Hay validaciones más estrictas, migraciones y condiciones de rollback entre versiones; consultar las [notas de actualización](https://github.com/rmyndharis/OpenWA/blob/v0.30.1/docs/14-migration-guide.md) y probar en staging con copias de seguridad. Este SDK no garantiza compatibilidad automática de todas las integraciones ni realiza el despliegue.
